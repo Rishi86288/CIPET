@@ -1,0 +1,462 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Secure File Portal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --fg: #000;
+      --card: #fff;
+      --border: #ccc;
+      --primary: #0064ff;
+    }
+    .dark {
+      --bg: #121212;
+      --fg: #fff;
+      --card: #1e1e1e;
+      --border: #333;
+      --primary: #4dabf7;
+    }
+    body {
+      margin:0;
+      font-family:sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    .center {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+    }
+    .card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 320px;
+      border: 1px solid var(--border);
+    }
+    input, button, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 16px;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #dashboard { display: none; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { padding: 8px; border: 1px solid var(--border); }
+    #error, #upload-error, #upload-success { color: red; font-size: 14px; }
+    #upload-success { color: green; }
+    #upload-section { margin-top: 20px; display: none; }
+    .modal { 
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.5); align-items: center; justify-content: center; 
+    }
+    .modal-content { 
+      background: var(--card); padding: 20px; border-radius: 8px; width: 300px; 
+      border: 1px solid var(--border); 
+    }
+    .modal-content button { margin-top: 10px; }
+    .action-btn { 
+      background: var(--primary); color: white; border: none; padding: 5px 10px; 
+      margin: 0 5px; cursor: pointer; border-radius: 4px; font-size: 14px; 
+    }
+  </style>
+</head>
+<body class="light">
+
+<div id="login" class="center">
+  <div class="card">
+    <h2 data-i18n="Login">Login</h2>
+    <input id="user" placeholder="Username" data-i18n-placeholder="Username">
+    <input id="pass" type="password" placeholder="Password" data-i18n-placeholder="Password">
+    <label><input type="checkbox" id="remember"> <span data-i18n="RememberMe">Remember Me</span></label>
+    <button onclick="login()"><span data-i18n="Login">Login</span></button>
+    <p id="error"></p>
+    <select id="lang"></select>
+    <button onclick="toggleTheme()">Toggle Theme</button>
+  </div>
+</div>
+
+<div id="dashboard">
+  <h2 data-i18n="Files">Files</h2>
+  <button onclick="logout()" style="float:right;"><span data-i18n="Logout">Logout</span></button>
+  <table>
+    <thead>
+      <tr>
+        <th data-i18n="Name">Name</th>
+        <th data-i18n="Download">Download</th>
+        <th data-i18n="Actions" id="actions-header" style="display: none;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="files"></tbody>
+  </table>
+  <div id="upload-section" style="display: none;">
+    <h3 data-i18n="UploadFile">Upload File</h3>
+    <input type="file" id="file-input">
+    <button onclick="uploadFile()"><span data-i18n="Upload">Upload</span></button>
+    <p id="upload-error"></p>
+    <p id="upload-success"></p>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal">
+  <div class="modal-content">
+    <h3 data-i18n="EditFile">Edit File</h3>
+    <input id="edit-name" placeholder="File Name" data-i18n-placeholder="FileName">
+    <input id="edit-url" placeholder="File URL" data-i18n-placeholder="FileURL">
+    <button onclick="saveEdit()"><span data-i18n="Save">Save</span></button>
+    <button onclick="closeModal('edit-modal')"><span data-i18n="Cancel">Cancel</span></button>
+  </div>
+</div>
+
+<!-- Modify Modal -->
+<div id="modify-modal" class="modal">
+  <div class="modal-content">
+    <h3 data-i18n="ModifyFile">Modify File</h3>
+    <input type="file" id="modify-file-input">
+    <button onclick="saveModify()"><span data-i18n="Save">Save</span></button>
+    <button onclick="closeModal('modify-modal')"><span data-i18n="Cancel">Cancel</span></button>
+  </div>
+</div>
+
+<script>
+const API_URL = "YOUR_APPS_SCRIPT_URL";
+let translations = {}, lang = "en", isAdmin = false, currentRowIndex = null, currentFileId = null;
+
+fetch("translation.json")
+  .then(r => r.json())
+  .then(json => {
+    translations = json;
+    buildLangOptions();
+    applyTranslations();
+  });
+
+function buildLangOptions() {
+  const select = document.getElementById("lang");
+  translations.language.forEach(l => {
+    const opt = document.createElement("option");
+    opt.value = l.code;
+    opt.textContent = l.name;
+    if (l.code === lang) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.onchange = () => {
+    lang = select.value;
+    applyTranslations();
+  };
+}
+
+function t(key) {
+  const obj = translations.language.find(l => l.code === lang);
+  return obj && obj.translation[key] ? obj.translation[key] : key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => el.placeholder = t(el.dataset.i18nPlaceholder));
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
+
+function login() {
+  const user = document.getElementById("user").value;
+  const pass = document.getElementById("pass").value;
+  const remember = document.getElementById("remember").checked;
+  document.getElementById("error").textContent = "";
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "auth", username: user })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.hash && bcrypt.compareSync(pass, res.hash)) {
+      if (remember) localStorage.setItem("login", user);
+      sessionStorage.setItem("login", user);
+      isAdmin = res.isAdmin;
+      showDashboard(user);
+    } else {
+      document.getElementById("error").textContent = t("Login failed. Invalid username or password");
+    }
+  })
+  .catch(() => document.getElementById("error").textContent = t("Error connecting to server"));
+}
+
+function showDashboard(user) {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  if (isAdmin) {
+    document.getElementById("upload-section").style.display = "block";
+    document.getElementById("actions-header").style.display = "table-cell";
+  }
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "files", username: user })
+  })
+  .then(r => r.json())
+  .then(data => {
+    const files = document.getElementById("files");
+    files.innerHTML = "";
+    data.forEach(f => {
+      const fileId = f.url.match(/\/file\/d\/(.+?)\//)?.[1] || f.url;
+      let row = `<tr><td>${f.name}</td><td><a href="${f.url}" target="_blank">${t("Download")}</a></td>`;
+      if (isAdmin) {
+        row += `<td>
+          <button class="action-btn" onclick="openEditModal(${f.rowIndex}, '${f.name}', '${f.url}')">${t("Edit")}</button>
+          <button class="action-btn" onclick="openModifyModal(${f.rowIndex}, '${f.name}', '${fileId}')">${t("Modify")}</button>
+          <button class="action-btn" onclick="deleteFile(${f.rowIndex}, '${fileId}')">${t("Delete")}</button>
+        </td>`;
+      } else {
+        row += `<td style="display: none;"></td>`;
+      }
+      row += `</tr>`;
+      files.innerHTML += row;
+    });
+  });
+}
+
+function uploadFile() {
+  const fileInput = document.getElementById("file-input");
+  const user = sessionStorage.getItem("login") || localStorage.getItem("login");
+  const errorEl = document.getElementById("upload-error");
+  const successEl = document.getElementById("upload-success");
+  errorEl.textContent = "";
+  successEl.textContent = "";
+
+  if (!fileInput.files[0]) {
+    errorEl.textContent = t("No file selected");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  if (file.size > 10 * 1024 * 1024) {
+    errorEl.textContent = t("File too large");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64Data = reader.result.split(",")[1];
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "upload",
+        username: user,
+        fileName: file.name,
+        fileData: base64Data,
+        mimeType: file.type
+      })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        successEl.textContent = t("File uploaded successfully") + `: ${res.fileName}`;
+        fileInput.value = "";
+        showDashboard(user);
+      } else {
+        errorEl.textContent = res.error || t("Upload failed");
+      }
+    })
+    .catch(() => errorEl.textContent = t("Error connecting to server"));
+  };
+  reader.readAsDataURL(file);
+}
+
+function openEditModal(rowIndex, name, url) {
+  currentRowIndex = rowIndex;
+  document.getElementById("edit-name").value = name;
+  document.getElementById("edit-url").value = url;
+  document.getElementById("edit-modal").style.display = "flex";
+}
+
+function openModifyModal(rowIndex, name, fileId) {
+  currentRowIndex = rowIndex;
+  currentFileId = fileId;
+  document.getElementById("modify-file-input").value = "";
+  document.getElementById("modify-modal").style.display = "flex";
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = "none";
+  currentRowIndex = null;
+  currentFileId = null;
+}
+
+function saveEdit() {
+  const user = sessionStorage.getItem("login") || localStorage.getItem("login");
+  const name = document.getElementById("edit-name").value;
+  const url = document.getElementById("edit-url").value;
+  if (!name || !url) {
+    alert(t("File name and URL are required"));
+    return;
+  }
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "edit",
+      username: user,
+      rowIndex: currentRowIndex,
+      fileName: name,
+      url: url
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.success) {
+      closeModal("edit-modal");
+      showDashboard(user);
+    } else {
+      alert(res.error || t("Edit failed"));
+    }
+  })
+  .catch(() => alert(t("Error connecting to server")));
+}
+
+function saveModify() {
+  const user = sessionStorage.getItem("login") || localStorage.getItem("login");
+  const fileInput = document.getElementById("modify-file-input");
+  if (!fileInput.files[0]) {
+    alert(t("No file selected"));
+    return;
+  }
+  const file = fileInput.files[0];
+  if (file.size > 10 * 1024 * 1024) {
+    alert(t("File too large"));
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64Data = reader.result.split(",")[1];
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "modify",
+        username: user,
+        rowIndex: currentRowIndex,
+        fileName: file.name,
+        fileData: base64Data,
+        mimeType: file.type,
+        fileId: currentFileId
+      })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        closeModal("modify-modal");
+        showDashboard(user);
+      } else {
+        alert(res.error || t("Modify failed"));
+      }
+    })
+    .catch(() => alert(t("Error connecting to server")));
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteFile(rowIndex, fileId) {
+  if (!confirm(t("Are you sure you want to delete this file?"))) return;
+  const user = sessionStorage.getItem("login") || localStorage.getItem("login");
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "delete",
+      username: user,
+      rowIndex: rowIndex,
+      fileId: fileId
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.success) {
+      showDashboard(user);
+    } else {
+      alert(res.error || t("Delete failed"));
+    }
+  })
+  .catch(() => alert(t("Error connecting to server")));
+}
+
+function logout() {
+  sessionStorage.removeItem("login");
+  localStorage.removeItem("login");
+  location.reload();
+}
+
+window.onload = () => {
+  const user = sessionStorage.getItem("login") || localStorage.getItem("login");
+  if (user) {
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "auth", username: user })
+    })
+    .then(r => r.json())
+    .then(res => {
+      isAdmin = res.isAdmin;
+      showDashboard(user);
+    });
+  }
+};
+</script>
+</body>
+</html>

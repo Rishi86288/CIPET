@@ -3,6 +3,43 @@
   "version": "2.5.1",
   "language": [
     {
+      {
+      "name": "English",
+      "code": "en",
+      "translation": {
+        "Login": "Login",
+        "Username": "Username",
+        "Password": "Password",
+        "Logout": "Logout",
+        "Files": "Files",
+        "Name": "Name",
+        "Download": "Download",
+        "RememberMe": "Remember Me",
+        "User not found": "User not found",
+        "Login failed. Invalid username or password": "Invalid username or password",
+        "Error connecting to server": "Error connecting to server",
+        "UploadFile": "Upload File",
+        "Upload": "Upload",
+        "No file selected": "No file selected",
+        "File uploaded successfully": "File uploaded successfully",
+        "Upload failed": "Upload failed",
+        "Actions": "Actions",
+        "Edit": "Edit",
+        "Modify": "Modify",
+        "Delete": "Delete",
+        "EditFile": "Edit File",
+        "ModifyFile": "Modify File",
+        "Save": "Save",
+        "Cancel": "Cancel",
+        "FileName": "File Name",
+        "FileURL": "File URL",
+        "Are you sure you want to delete this file?": "Are you sure you want to delete this file?",
+        "Edit failed": "Edit failed",
+        "Modify failed": "Modify failed",
+        "Delete failed": "Delete failed",
+        "File too large": "File too large"
+      }
+    }
       "name": "Română",
       "code": "ro",
       "translation": {

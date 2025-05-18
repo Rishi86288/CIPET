@@ -1,0 +1,201 @@
+<html><head><meta charset="UTF-8"><title>DESIGN THINKING TEAM SELECTION</title>
+<link href="css/form.css" rel="stylesheet" type="text/css"><script src="js/validation.js"></script>
+<script>
+    function zf_ValidateAndSubmit() {
+        if (zf_CheckMandatory()) {
+            if (zf_ValidCheck()) {
+                if (isSalesIQIntegrationEnabled) {
+                    zf_addDataToSalesIQ();
+                }
+
+                // Custom validation to check if the selected name is in the 4 members selection
+                var selectedMembers = Array.from(document.getElementsByName("MultipleChoice")[0].selectedOptions).map(option => option.value);
+                var yourName = document.querySelector('input[name="Checkbox"]:checked').value;
+
+                if (selectedMembers.indexOf(yourName) === -1) {
+                    alert("Your name must be included in the 4 selected members.");
+                    return false;
+                }
+
+                // Check for duplicate team selections
+                fetch('team_selection.php?fetch=true')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            var existingTeams = data.data;
+
+                            for (var i = 0; i < existingTeams.length; i++) {
+                                var existingTeam = existingTeams[i];
+                                if (existingTeam && existingTeam.length === 4) {
+                                    if (existingTeam.every(member => selectedMembers.includes(member)) && selectedMembers.every(member => existingTeam.includes(member))) {
+                                        alert("This team selection already exists.");
+                                        throw new Error("Duplicate team"); // Stop form submission
+                                    }
+                                }
+                            }
+                            // If no duplicates, proceed with form submission
+                            document.forms.form.submit();
+                        } else {
+                            alert("Error fetching team data: " + data.error);
+                            return false;
+                        }
+                    })
+                  //  .catch(error => {
+                   //     if(error.message !== "Duplicate team"){
+                //          console.error('Error:', error);
+                        //  alert("An error occurred during validation.");
+                   //     }
+                  //      return false; // Prevent form submission in case of fetch error.
+               //     });
+
+            //   return false; // Prevent default form submission while fetch is pending
+
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+</script>
+</head><body class="zf-backgroundBg"><!-- Change or deletion of the name attributes in the input tag will lead to empty values on record submission-->
+<div class="zf-templateWidth"><form action='https://forms.zohopublic.in/cipetcollege1/form/DESIGNTHINKINGTEAMSELECTION/formperma/bPnIAdnh0HItdLm-wcLUwEyT3G047S5MnCd0qp6jyYA/htmlRecords/submit' name='form' method='POST' onSubmit='javascript:document.charset="UTF-8"; return zf_ValidateAndSubmit();' accept-charset='UTF-8' enctype='multipart/form-data' id='form'><input type="hidden" name="zf_referrer_name" value=""><!-- To Track referrals , place the referrer name within the " " in the above hidden input field -->
+<input type="hidden" name="zf_redirect_url" value=""><!-- To redirect to a specific page after record submission , place the respective url within the " " in the above hidden input field -->
+<input type="hidden" name="zc_gad" value=""><!-- If GCLID is enabled in Zoho CRM Integration, click details of AdWords Ads will be pushed to Zoho CRM -->
+<div class="zf-templateWrapper"><!---------template Header Starts Here---------->
+<ul class="zf-tempHeadBdr"><li class="zf-tempHeadContBdr"><h2 class="zf-frmTitle"><em>DESIGN THINKING TEAM SELECTION</em></h2>
+<p class="zf-frmDesc"></p>
+<div class="zf-clearBoth"></div></li></ul><!---------template Header Ends Here---------->
+<!---------template Container Starts Here---------->
+<div class="zf-subContWrap zf-topAlign"><ul>
+<!---------Multiple Choice Starts Here----------> 
+<li class="zf-tempFrmWrapper zf-large"><label class="zf-labelName">SELECT 4 MEMBERS INCLUDING YOURSELF
+<em class="zf-important">*</em>
+</label>
+<div class="zf-tempContDiv zf-mSelect">
+<select name="MultipleChoice" checktype="c1" multiple="multiple" >
+<option value="Abishek">Abishek</option>
+<option value="Aditya&#x20;Patil">Aditya&#x20;Patil</option>
+<option value="Aditya&#x20;Singh">Aditya&#x20;Singh</option>
+<option value="Ajay&#x20;Sahani">Ajay&#x20;Sahani</option>
+<option value="Akanshu&#x20;Chauhan">Akanshu&#x20;Chauhan</option>
+<option value="Anmol">Anmol</option>
+<option value="Avinesh&#x20;Pal">Avinesh&#x20;Pal</option>
+<option value="Ayush&#x20;Tripathi">Ayush&#x20;Tripathi</option>
+<option value="Devesh">Devesh</option>
+<option value="Garv&#x20;Prajapati">Garv&#x20;Prajapati</option>
+<option value="Gaurav">Gaurav</option>
+<option value="Hariom">Hariom</option>
+<option value="Harshit">Harshit</option>
+<option value="Krushna&#x20;Girawale">Krushna&#x20;Girawale</option>
+<option value="Manish&#x20;yadav">Manish&#x20;yadav</option>
+<option value="Mehboob&#x20;Subani">Mehboob&#x20;Subani</option>
+<option value="Praveen">Praveen</option>
+<option value="Punit&#x20;Kant">Punit&#x20;Kant</option>
+<option value="Raunak&#x20;Singh">Raunak&#x20;Singh</option>
+<option value="Rishi&#x20;Raj&#x20;Prasad">Rishi&#x20;Raj&#x20;Prasad</option>
+<option value="Rohan&#x20;Gawas">Rohan&#x20;Gawas</option>
+<option value="Samip">Samip</option>
+<option value="Shivam&#x20;Pathak">Shivam&#x20;Pathak</option>
+<option value="Shivansh">Shivansh</option>
+<option value="Tanmay&#x20;bhosle">Tanmay&#x20;bhosle</option>
+<option value="Vipin&#x20;Rathore">Vipin&#x20;Rathore</option>
+<option value="Yash&#x20;Wagh">Yash&#x20;Wagh</option></select><p id="MultipleChoice_error" class="zf-errorMessage" style="display:none;">Invalid value</p>
+</div><div class="zf-clearBoth"></div></li><!---------Multiple Choice Ends Here----------> 
+<!---------Checkbox Starts Here---------->    
+<li class="zf-checkbox zf-tempFrmWrapper zf-oneColumns"><label class="zf-labelName">YOUR NAME
+<em class="zf-important">*</em>
+</label>
+<div class="zf-tempContDiv">
+<div class="zf-overflow">
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_1" name="Checkbox" checktype="c1" value="Abishek"/>
+<label for="Checkbox_1" class="zf-checkChoice">Abishek</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_2" name="Checkbox" checktype="c1" value="Aditya&#x20;Patil"/>
+<label for="Checkbox_2" class="zf-checkChoice">Aditya&#x20;Patil</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_3" name="Checkbox" checktype="c1" value="Aditya&#x20;Singh"/>
+<label for="Checkbox_3" class="zf-checkChoice">Aditya&#x20;Singh</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_4" name="Checkbox" checktype="c1" value="Ajay&#x20;Sahani"/>
+<label for="Checkbox_4" class="zf-checkChoice">Ajay&#x20;Sahani</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_5" name="Checkbox" checktype="c1" value="Akanshu&#x20;Chauhan"/>
+<label for="Checkbox_5" class="zf-checkChoice">Akanshu&#x20;Chauhan</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_6" name="Checkbox" checktype="c1" value="Anmol"/>
+<label for="Checkbox_6" class="zf-checkChoice">Anmol</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_7" name="Checkbox" checktype="c1" value="Avinesh&#x20;Pal"/>
+<label for="Checkbox_7" class="zf-checkChoice">Avinesh&#x20;Pal</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_8" name="Checkbox" checktype="c1" value="Ayush&#x20;Tripathi"/>
+<label for="Checkbox_8" class="zf-checkChoice">Ayush&#x20;Tripathi</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_9" name="Checkbox" checktype="c1" value="Devesh"/>
+<label for="Checkbox_9" class="zf-checkChoice">Devesh</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_10" name="Checkbox" checktype="c1" value="Garv&#x20;Prajapati"/>
+<label for="Checkbox_10" class="zf-checkChoice">Garv&#x20;Prajapati</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_11" name="Checkbox" checktype="c1" value="Gaurav"/>
+<label for="Checkbox_11" class="zf-checkChoice">Gaurav</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_12" name="Checkbox" checktype="c1" value="Hariom"/>
+<label for="Checkbox_12" class="zf-checkChoice">Hariom</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_13" name="Checkbox" checktype="c1" value="Harshit"/>
+<label for="Checkbox_13" class="zf-checkChoice">Harshit</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_14" name="Checkbox" checktype="c1" value="Krushna&#x20;Girawale"/>
+<label for="Checkbox_14" class="zf-checkChoice">Krushna&#x20;Girawale</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_15" name="Checkbox" checktype="c1" value="Manish&#x20;yadav"/>
+<label for="Checkbox_15" class="zf-checkChoice">Manish&#x20;yadav</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_16" name="Checkbox" checktype="c1" value="Mehboob&#x20;Subani"/>
+<label for="Checkbox_16" class="zf-checkChoice">Mehboob&#x20;Subani</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_17" name="Checkbox" checktype="c1" value="Praveen"/>
+<label for="Checkbox_17" class="zf-checkChoice">Praveen</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_18" name="Checkbox" checktype="c1" value="Punit&#x20;Kant"/>
+<label for="Checkbox_18" class="zf-checkChoice">Punit&#x20;Kant</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_19" name="Checkbox" checktype="c1" value="Raunak&#x20;Singh"/>
+<label for="Checkbox_19" class="zf-checkChoice">Raunak&#x20;Singh</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_20" name="Checkbox" checktype="c1" value="Rishi&#x20;Raj&#x20;Prasad"/>
+<label for="Checkbox_20" class="zf-checkChoice">Rishi&#x20;Raj&#x20;Prasad</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_21" name="Checkbox" checktype="c1" value="Rohan&#x20;Gawas"/>
+<label for="Checkbox_21" class="zf-checkChoice">Rohan&#x20;Gawas</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_22" name="Checkbox" checktype="c1" value="Samip"/>
+<label for="Checkbox_22" class="zf-checkChoice">Samip</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_23" name="Checkbox" checktype="c1" value="Shivam&#x20;Pathak"/>
+<label for="Checkbox_23" class="zf-checkChoice">Shivam&#x20;Pathak</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_24" name="Checkbox" checktype="c1" value="Shivansh"/>
+<label for="Checkbox_24" class="zf-checkChoice">Shivansh</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_25" name="Checkbox" checktype="c1" value="Tanmay&#x20;bhosle"/>
+<label for="Checkbox_25" class="zf-checkChoice">Tanmay&#x20;bhosle</label> </span>
+
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_25" name="Checkbox" checktype="c1" value="Vipin&#x20;Rathore"/>
+<label for="Checkbox_25" class="zf-checkChoice">Vipin&#x20;Rathore</label> </span>
+<span class="zf-multiAttType"> 
+<input class="zf-checkBoxType" type="checkbox" id="Checkbox_26" name="Checkbox" checktype="c1" value="Yash&#x20;Wagh"/>
+<label for="Checkbox_26" class="zf-checkChoice">Yash&#x20;Wagh</label> </span>
+<div class="zf-clearBoth"></div></div><p id="Checkbox_error" class="zf-errorMessage" style="display:none;">Invalid value</p>
+</div><div class="zf-clearBoth"></div></li><!---------Checkbox Ends Here---------->    
+</ul></div><!---------template Container Starts Here---------->
+<ul><button class="zf-submitColor" >Submit</button></li></ul></div><!-- 'zf-templateWrapper' ends --></form></div><!-- 'zf-templateWidth' ends -->
+<script type="text/javascript">var zf_DateRegex = new RegExp("^(([0][1-9])|([1-2][0-9])|([3][0-1]))[-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[-](?:(?:19|20)[0-9]{2})$");
+var zf_MonthYearRegex = new RegExp("^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[-](?:(?:19|20)[0-9]{2})$");
+var zf_MandArray = [ "MultipleChoice", "Checkbox"]; 
+var zf_FieldArray = [ "MultipleChoice", "Checkbox"]; 
+var isSalesIQIntegrationEnabled = false;
+var salesIQFieldsArray = [];</script></body></html>
